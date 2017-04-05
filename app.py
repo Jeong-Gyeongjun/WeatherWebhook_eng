@@ -18,7 +18,7 @@ from flask import make_response
 
 
 
-INTENT_NAME = "날씨질문"
+INTENT_NAME = '날씨질문'
 CITY_NAME = "Daejeon"
 DATE_ARRAY = ['오늘','내일','글피']
 YAHOO_WEATHERCODE = {
@@ -91,27 +91,27 @@ def webhook():
 def makeWebhookResult(req):
     if req.get("result").get("action") != INTENT_NAME:
         return {}
-    baseurl = "http://query.yahooapis.com/v1/public/yql?q=%20select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text=%27" + CITY_NAME + "%27)&format=json"
+    baseurl = 'http://query.yahooapis.com/v1/public/yql?q=%20select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text=%27" + CITY_NAME + "%27)&format=json'
     result = urlopen(baseurl).read().decode('utf-8')
     data = json.loads(result)
 
     date = 0
-    if(req.get("result").get("parameters").get("date") == DATE_ARRAY[0]) :
+    if(req.get('result').get('parameters').get('date') == DATE_ARRAY[0]) :
         date = 0
-    if(req.get("result").get("parameters").get("date") == DATE_ARRAY[1]) :
+    if(req.get('result').get('parameters').get('date') == DATE_ARRAY[1]) :
         date = 1
-    if(req.get("result").get("parameters").get("date") == DATE_ARRAY[2]) :
+    if(req.get('result').get('parameters').get('date') == DATE_ARRAY[2]) :
         date = 2
 
     data = data.get('query').get('results').get('channel').get('item').get('forecast')[date]
 
-    sentence = req.get("result").get("parameters").get("date")+' 날씨는 최저 ' + str(int(FtoC(int(data.get('low'))))) + '도 최고 ' + str(int(FtoC(int(data.get('high'))))) + '도로 '+ YAHOO_WEATHERCODE[int(data.get('code'))]
+    sentence = req.get('result').get('parameters').get('date')+' 날씨는 최저 ' + str(int(FtoC(int(data.get('low'))))) + '도 최고 ' + str(int(FtoC(int(data.get('high'))))) + '도로 '+ YAHOO_WEATHERCODE[int(data.get('code'))]
 
 
     return {
-        "speech": sentence,
-        "displayText": sentence,
-        "source": "apiai-yahoo-weather"
+        'speech': sentence,
+        'displayText': sentence,
+        'source': 'apiai-yahoo-weather'
     }
 
 def FtoC(num):
