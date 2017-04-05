@@ -69,7 +69,7 @@ YAHOO_WEATHERCODE = {
 app = Flask(__name__)
 
 
-@app.route('/', methods=['POST'])
+@app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json(silent=True, force=True)
     #print(json.dumps(data, indent=4))
