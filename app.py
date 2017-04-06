@@ -89,14 +89,16 @@ def webhook():
 
     result = make_response(req)
     result.headers['Content-Type'] = 'application/json'
+    
+    print(json.dumps(result, indent=4))
+    
     return result
 
 
 
 def makeWebhookResult(req):
-    print(req.get("result").get("action"))
-    print(req.get("result").get("metadata").get("intentName"))
-    if req.get("result").get("action") != INTENT_NAME:
+
+    if req.get("result").get("metadata").get("intentName") != INTENT_NAME:
         return {}
     baseurl = 'http://query.yahooapis.com/v1/public/yql?q=%20select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text=%27' + CITY_NAME + '%27)&format=json'
     result = urlopen(baseurl).read().decode('utf-8')
