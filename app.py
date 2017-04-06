@@ -76,11 +76,16 @@ app = Flask(__name__)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
+    print('get data from request...')
     data = request.get_json(silent=True, force=True)
     #print(json.dumps(data, indent=4))
 
+    print('get weather from Yahoo...')
+
     req = makeWebhookResult(data)
     req = json.dumps(req, indent=4)
+
+    print('make the response...')
 
     result = make_response(req)
     result.headers['Content-Type'] = 'application/json'
@@ -120,4 +125,4 @@ def FtoC(num):
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
-    app.run(debug=False, port=port, host='0.0.0.0')
+    app.run(debug=True, port=port, host='0.0.0.0')
