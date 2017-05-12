@@ -54,7 +54,7 @@ def webhook():
     data = makeWebhookResult(req, city, date, unit)
 
     print(data)
-    return 'hello!'
+    return data
 
 
 def makeWebhookResult(req, city, date, unit):
