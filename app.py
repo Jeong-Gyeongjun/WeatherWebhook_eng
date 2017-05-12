@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-from future.standard_library import install_aliases
-install_aliases()
-
 import json
 import os
+import re
+
+import pytz
+from datetime import datetime, timedelta
 
 from urllib.parse import urlparse, urlencode
 from urllib.request import urlopen, Request
@@ -17,105 +17,110 @@ from flask import request
 from flask import make_response
 
 
-
-INTENT_NAME = '날씨질문'
-CITY_NAME = "Daejeon"
-DATE_ARRAY = ['오늘','내일','글피']
-YAHOO_WEATHERCODE = {
-0 :  '토네이도가 불겠습니다',
-1 :  '열대성 태풍이 있겠습니다',
-2 :  '허리케인이 불겠습니다',
-3 :  '맹렬한 뇌우가 있겠습니다',
-4 :  '뇌우가 있겠습니다',
-5 :  '눈과 비가 섞어 내리겠습니다',
-6 :  '비와 진눈깨비가 섞어 내리겠습니다',
-7 :  '눈과 진눈깨비가 섞어 내리겠습니다',
-8 :  '결빙성 진눈깨비가 섞어 내리겠습니다',
-9 :  '진눈깨비가 내리겠습니다',
-10:  '어는 비가 내리겠습니다',
-11:  '소나기가 있겠습니다',
-12:  '소나기가 있겠습니다',
-13:  '소낙눈이 내리겠습니다',
-14:  '눈이 약간 내리겠습니다',
-15:  '날린눈이 내리겠습니다',
-16:  '눈이 내리겠습니다',
-17:  '싸락눈이 내리겠습니다',
-18:  '진눈깨비가 내리겠습니다',
-19:  '미세먼지가 많겠습니다',
-20:  '안개가 끼겠습니다',
-21:  '실안개가 끼겠습니다',
-22:  '짙은안개가 끼겠습니다',
-23:  '강한 바람이 불겠습니다',
-24:  '바람이 불겠습니다',
-25:  '춥겠습니다',
-26:  '구름이 끼겠습니다',
-27:  '구름이 많겠습니다',
-28:  '구름이 많겠습니다',
-29:  '구름이 조금 끼겠습니다',
-30:  '구름이 조금 끼겠습니다',
-31:  '맑겠습니다',
-32:  '화창하겠습니다',
-33:  '하늘이 맑겠습니다',
-34:  '하늘이 맑겠습니다',
-35:  '비와 싸락눈이 섞어 내리겠습니다',
-36:  '덥겠습니다',
-37:  '국지성 뇌우가 있겠습니다',
-38:  '산발적인 뇌우가 있겠습니다',
-39:  '산발적인 뇌우가 있겠습니다',
-40:  '산발적 소나기가 내리겠습니다',
-41:  '폭설이 내리겠습니다',
-42:  '산발적 눈과 비가 내리겠습니다',
-43:  '폭설이 내리겠습니다',
-44:  '부분적으로 구름이 끼겠습니다',
-45:  '뇌우가 있겠습니다',
-46:  '소낙눈이 내리겠습니다',
-47:  '국지성 소낙눈이 내리겠습니다'}
-
 app = Flask(__name__)
 
 
+INTENT_NAME = 'weather'
+PARAMETERS_CLASS = ['address', 'date-time', 'unit']
+
+DEFAULT_CITY = 'Daejeon'
+TIMEZONE = 'Asia/Seoul'
+
+def get_strings(req, strs) :
+
+    for i in strs :
+        if (req == None):
+            return None
+        req = req.get(i)
+    return req
+
+
+
 @app.route('/webhook', methods=['POST'])
-def webhook():
-    print('get data from request...')
-    data = request.get_json(silent=True, force=True)
-    #print(json.dumps(data, indent=4))
-
-    print('get weather from Yahoo...')
-
-    req = makeWebhookResult(data)
-    req = json.dumps(req, indent=4)
-
-    print('make the response...')
-
-    result = make_response(req)
-    result.headers['Content-Type'] = 'application/json'
+def webhook():    
+    req = request.get_json(silent=True, force=True)
     
-    print(json.dumps(req, indent=4))
+    city = DEFAULT_CITY
+    cityRequested = get_strings(req, ['result', 'parameters', PARAMETERS_CLASS[0]])
     
-    return result
+    if (cityRequested != None):
+        if ('{\"city\"' in cityRequested and '\"}' in cityRequested):
+            city = cityRequested[7:-2]
+
+    date = get_strings(req, ['result', 'parameters', PARAMETERS_CLASS[1]])
+    unit = get_strings(req, ['result', 'parameters', PARAMETERS_CLASS[2]])
+
+    #print(city, date, unit)
+    data = makeWebhookResult(req, city, date, unit)
+
+    print(data)
+    return 'hello!'
 
 
-
-def makeWebhookResult(req):
-
-    if req.get("result").get("metadata").get("intentName") != INTENT_NAME:
+def makeWebhookResult(req, city, date, unit):
+    if (get_strings(req, ['result', 'metadata', 'intentName']) != INTENT_NAME):
         return {}
-    baseurl = 'http://query.yahooapis.com/v1/public/yql?q=%20select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text=%27' + CITY_NAME + '%27)&format=json'
+    baseurl = 'http://query.yahooapis.com/v1/public/yql?q=%20select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text=%27' + city + '%27)&format=json'
     result = urlopen(baseurl).read().decode('utf-8')
-    data = json.loads(result)
+    
+    data = json.loads(result).get('query')
 
-    date = 0
-    if(req.get('result').get('parameters').get('date')== DATE_ARRAY[0]) :
-        date = 0
-    if(req.get('result').get('parameters').get('date') == DATE_ARRAY[1]) :
-        date = 1
-    if(req.get('result').get('parameters').get('date') == DATE_ARRAY[2]) :
-        date = 2
+    if(data.get('results') == None):
+        #API Server error
+        sentence = 'server error'
+        return {
+            'speech': sentence,
+            'displayText': sentence,
+            'source': 'apiai-yahoo-weather'
+        }
 
-    data = data.get('query').get('results').get('channel').get('item').get('forecast')[date]
+    deltaDate = 0
 
-    sentence = req.get('result').get('parameters').get('date')+' 날씨는 최저 ' + str(int(FtoC(int(data.get('low'))))) + '도 최고 ' + str(int(FtoC(int(data.get('high'))))) + '도로 '+ YAHOO_WEATHERCODE[int(data.get('code'))]
+    r = re.compile('\d\d\d\d-\d\d-\d\d')
 
+    if(r.match(date[0:10]) is not None) :
+        querytime = datetime.strptime(get_strings(data,['created']), '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=pytz.utc).astimezone(pytz.timezone(TIMEZONE)).replace(tzinfo=None)
+        requestedtime = datetime.strptime(date[0:10], '%Y-%m-%d')
+    
+        delta = requestedtime - querytime
+        deltaDate = delta.days + 1
+
+
+    if(deltaDate < 0):
+        sentence = 'I don\'t want to find the past weather...' 
+        return {
+            'speech': sentence,
+            'displayText': sentence,
+            'source': 'apiai-yahoo-weather'
+        }
+
+    if(deltaDate > 9):
+        sentence = 'I can find weather only within 10 days...'
+        return {
+            'speech': sentence,
+            'displayText': sentence,
+            'source': 'apiai-yahoo-weather'
+        }
+
+
+    weather = get_strings(data, ['results','channel','item','forecast'])[deltaDate]
+
+    #print(json.dumps(data, indent=4))
+    #print(json.dumps(weather, indent=4))
+    #print(deltaDate)
+    
+    sentence =  ('It will be ' 
+    + weather.get('text') 
+    + ' at ' 
+    + weather.get('date') 
+    + ', in ' 
+    + city 
+    + '. Minimum temperature near ' 
+    + str(int(FConversion(int(weather.get('low')), unit))) 
+    + ' degrees ' 
+    + '. Maximum temperature near ' 
+    + str(int(FConversion(int(weather.get('high')), unit)))  
+    + ' degrees')
 
     return {
         'speech': sentence,
@@ -123,10 +128,21 @@ def makeWebhookResult(req):
         'source': 'apiai-yahoo-weather'
     }
 
-def FtoC(num):
-    return (num-32)/1.8
+def FConversion(num, unit):
+    if(unit == 'C') :
+        return (num - 32)/1.8
+    if(unit == 'K') :
+        return (num + 459.67)/1.8
+    if(unit == 'R') :
+        return num + 459.67
+    else :
+        return num
+
 
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     app.run(debug=True, port=port, host='0.0.0.0')
+
+
+
