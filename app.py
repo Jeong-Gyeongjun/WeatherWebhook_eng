@@ -51,10 +51,12 @@ def webhook():
     unit = get_strings(req, ['result', 'parameters', PARAMETERS_CLASS[2]])
 
     #print(city, date, unit)
-    data = makeWebhookResult(req, city, date, unit)
-
-    print(data)
-    return data
+    result = makeWebhookResult(req, city, date, unit)
+    result.headers['Content-Type'] = 'application/json'
+    
+    print(json.dumps(req, indent=4))
+    
+    return result
 
 
 def makeWebhookResult(req, city, date, unit):
@@ -108,7 +110,7 @@ def makeWebhookResult(req, city, date, unit):
     #print(json.dumps(data, indent=4))
     #print(json.dumps(weather, indent=4))
     #print(deltaDate)
-    
+
     sentence =  ('It will be ' 
     + weather.get('text') 
     + ' at ' 
