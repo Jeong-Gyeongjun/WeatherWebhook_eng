@@ -41,11 +41,10 @@ def webhook():
     req = request.get_json(silent=True, force=True)
     
     city = DEFAULT_CITY
-    cityRequested = get_strings(req, ['result', 'parameters', PARAMETERS_CLASS[0]])
+    cityRequested = get_strings(req, ['result', 'parameters', PARAMETERS_CLASS[0], 'city'])
     
     if (cityRequested != None):
-        if ('{\"city\"' in cityRequested and '\"}' in cityRequested):
-            city = cityRequested[7:-2]
+            city = cityRequested
 
     date = get_strings(req, ['result', 'parameters', PARAMETERS_CLASS[1]])
     unit = get_strings(req, ['result', 'parameters', PARAMETERS_CLASS[2]])
@@ -53,7 +52,7 @@ def webhook():
     #print(city, date, unit)
     req = makeWebhookResult(req, city, date, unit)
     req = json.dumps(req, indent=4)
-    
+
     result = make_response(req)
     result.headers['Content-Type'] = 'application/json'
         
