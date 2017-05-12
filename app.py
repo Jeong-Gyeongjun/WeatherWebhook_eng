@@ -51,7 +51,10 @@ def webhook():
     unit = get_strings(req, ['result', 'parameters', PARAMETERS_CLASS[2]])
 
     #print(city, date, unit)
-    result = makeWebhookResult(req, city, date, unit)
+    req = makeWebhookResult(req, city, date, unit)
+    req = json.dumps(req, indent=4)
+    
+    result = make_response(req)
     result.headers['Content-Type'] = 'application/json'
         
     return result
