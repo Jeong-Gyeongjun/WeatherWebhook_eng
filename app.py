@@ -31,13 +31,11 @@ def get_strings(req, strs) :
     for i in strs :
         if (req == None):
             return None
-        if (type(req) is str):
+        if (type(req) is not dict):
             return req    
         req = req.get(i)
 
-    if (type(req) is str):
-        return req
-    return None
+    return req
 
 
 
