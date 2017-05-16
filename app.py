@@ -38,19 +38,21 @@ def get_strings(req, strs) :
 
 @app.route('/webhook', methods=['POST'])
 def webhook():    
-    req = request.get_json(silent=True, force=True)
+    inp = request.get_json(silent=True, force=True)
+    print(json.dumps(inp, indent=4))
+
     
     city = DEFAULT_CITY
-    cityRequested = get_strings(req, ['result', 'parameters', PARAMETERS_CLASS[0], 'city'])
+    cityRequested = get_strings(inp, ['result', 'parameters', PARAMETERS_CLASS[0], 'city'])
     
     if (cityRequested != None):
             city = cityRequested
 
-    date = get_strings(req, ['result', 'parameters', PARAMETERS_CLASS[1]])
-    unit = get_strings(req, ['result', 'parameters', PARAMETERS_CLASS[2]])
+    date = get_strings(inp, ['result', 'parameters', PARAMETERS_CLASS[1]])
+    unit = get_strings(inp, ['result', 'parameters', PARAMETERS_CLASS[2]])
 
-    #print(city, date, unit)
-    req = makeWebhookResult(req, city, date, unit)
+    print(city, date, unit)
+    req = makeWebhookResult(inp, city, date, unit)
     req = json.dumps(req, indent=4)
 
     result = make_response(req)
