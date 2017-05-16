@@ -31,6 +31,9 @@ def get_strings(req, strs) :
     for i in strs :
         if (req == None):
             return None
+        if (type(req) is str):
+            return None
+            
         req = req.get(i)
     return req
 
@@ -43,10 +46,10 @@ def webhook():
 
     
     city = DEFAULT_CITY
-    cityRequested = get_strings(inp, ['result', 'parameters', PARAMETERS_CLASS[0], 'city'])
+    cityRequested = get_strings(inp, ['result', 'parameters', PARAMETERS_CLASS[0]])
     
     if (cityRequested != None):
-            city = cityRequested
+            city = cityRequested[5:]
 
     date = get_strings(inp, ['result', 'parameters', PARAMETERS_CLASS[1]])
     unit = get_strings(inp, ['result', 'parameters', PARAMETERS_CLASS[2]])
