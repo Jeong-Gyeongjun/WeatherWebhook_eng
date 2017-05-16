@@ -49,7 +49,7 @@ def webhook():
     cityRequested = get_strings(inp, ['result', 'parameters', PARAMETERS_CLASS[0]])
     
     if (cityRequested != None):
-            city = cityRequested[5:]
+            city = cityRequested
 
     date = get_strings(inp, ['result', 'parameters', PARAMETERS_CLASS[1]])
     unit = get_strings(inp, ['result', 'parameters', PARAMETERS_CLASS[2]])
